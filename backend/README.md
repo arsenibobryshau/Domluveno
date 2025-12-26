@@ -2,12 +2,12 @@
 
 Tento návod vás provede: založením DB ve Supabase, nahráním migrací, lokálním během a deployem na Render. Vše je připravené pro Expo Go (API musí být přes HTTPS).
 
-## 1) Supabase (Postgres + Storage)
-1. Na https://supabase.com vytvořte projekt (EU region, free tier).
-2. V menu **Database → Connection string** si uložte Postgres URI (postgresql://…).
-3. V SQL editoru spusťte migraci z `backend/migrations/V1__init.sql` (zahrnuje refresh tokeny).
-4. V menu **Storage** založte bucket `uploads` (Private).
-5. V menu **Settings → API** zkopírujte **Service role key** – použije pouze backend (nikdy klient).
+## 1) Postgres
+- Pro Render použijte **Managed Postgres** (internal URL). Nastavte:
+  - `SPRING_DATASOURCE_URL=jdbc:postgresql://<host>:5432/<db>?sslmode=require`
+  - `SPRING_DATASOURCE_USERNAME=<user>`
+  - `SPRING_DATASOURCE_PASSWORD=<pass>`
+- Pokud používáte Supabase, platí stejné hodnoty (jen jiný host).
 
 ### Převod connection string pro Spring
 Supabase dává např. `postgresql://postgres:heslo@db.supabase.co:5432/postgres`. Pro Spring nastavte:
@@ -64,6 +64,21 @@ ALLOWED_ORIGINS=*
 - `backend/application.yml` – šablona konfigurace pro Spring Boot (používá env proměnné).
 - `backend/Dockerfile` – multi-stage build (Gradle → JRE).
 - `backend/docker-compose.yml` – lokální Postgres + app.
-- `backend/migrations/V1__init.sql` – init migrace s tabulkami a refresh tokeny.
+- `backend/src/main/resources/db/migration` – migrace (V1 schéma, V2 seed kategorií).
+- `backend/src/main/kotlin/com/domluveno` – zdrojáky (api, security, domain).
+
+## 7) API (MVP)
+- `GET /` – status
+- `GET /health` – healthcheck
+- Auth: `POST /auth/register`, `POST /auth/login` (JWT v response)
+- Kategorie: `GET /categories`
+- Poptávky: `GET /requests` (volitelně ?categoryId), `GET /requests/{id}`, `POST /requests`
+- Nabídky: `POST /requests/{id}/offers`, `POST /offers/{id}/accept`, `POST /offers/{id}/reject`
+- Konverzace: `POST /conversations` (requestId, withUserId)
+- Zprávy: `GET /conversations/{id}/messages?after=ISO_INSTANT`, `POST /conversations/{id}/messages`
+
+Poznámky:
+- Auth je stateless JWT; předávej `Authorization: Bearer <token>`.
+- Pro MVP zatím minimální validace vlastnictví (není vynucena). Pro produkci doplnit kontroly.
 
 

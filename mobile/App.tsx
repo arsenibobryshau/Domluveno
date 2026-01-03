@@ -1,180 +1,95 @@
+import React, { useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { OnboardingScreen } from './src/screens/OnboardingScreen';
+import { LoginScreen } from './src/screens/LoginScreen';
+import { SignupScreen } from './src/screens/SignupScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { CalendarScreen } from './src/screens/CalendarScreen';
+import { AvailabilityScreen } from './src/screens/AvailabilityScreen';
+import { PortalScreen } from './src/screens/PortalScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
-import { Button, ScrollView, StyleSheet, Text, TextInput, View, Alert } from 'react-native';
-import { api } from './src/apiClient';
-import { login, register } from './src/authService';
-import { clearToken } from './src/token';
+import { Ionicons } from '@expo/vector-icons';
+import { colors } from './src/theme';
 
-export default function App() {
-  const [categories, setCategories] = useState<any[]>([]);
-  const [requests, setRequests] = useState<any[]>([]);
-  const [email, setEmail] = useState('test@example.com');
-  const [password, setPassword] = useState('heslo123');
-  const [firstName, setFirstName] = useState('Jan');
-  const [lastName, setLastName] = useState('Novák');
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+type RootStackParamList = {
+  Onboarding: undefined;
+  Login: undefined;
+  Signup: undefined;
+  Main: undefined;
+};
 
-  useEffect(() => {
-    refreshPublic();
-  }, []);
+const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator();
 
-  const refreshPublic = async () => {
-    try {
-      const [cats, reqs] = await Promise.all([api.getCategories(), api.getRequests()]);
-      setCategories(cats);
-      setRequests(reqs);
-    } catch (e: any) {
-      Alert.alert('Chyba', e.message);
-    }
-  };
-
-  const handleRegister = async () => {
-    setLoading(true);
-    try {
-      const t = await register(email, password, firstName, lastName);
-      setToken(t);
-      Alert.alert('OK', 'Registrace hotova, token uložen');
-    } catch (e: any) {
-      Alert.alert('Chyba', e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogin = async () => {
-    setLoading(true);
-    try {
-      const t = await login(email, password);
-      setToken(t);
-      Alert.alert('OK', 'Přihlášen, token uložen');
-    } catch (e: any) {
-      Alert.alert('Chyba', e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateRequest = async () => {
-    setLoading(true);
-    try {
-      await api.createRequest({
-        title: 'Úklid bytu',
-        description: '2+kk',
-        categoryId: categories[0]?.id || 1,
-        budget: 1000,
-        currency: 'CZK',
-      });
-      Alert.alert('OK', 'Poptávka vytvořena');
-      await refreshPublic();
-    } catch (e: any) {
-      Alert.alert('Chyba', e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    await clearToken();
-    setToken(null);
-    Alert.alert('OK', 'Odhlášeno');
-  };
-
+function MainTabs() {
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <StatusBar style="auto" />
-      <Text style={styles.title}>Domluveno MVP (Expo)</Text>
-
-      <View style={styles.box}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" />
-        <Text style={styles.label}>Heslo</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoCapitalize="none"
-        />
-        <Text style={styles.label}>Jméno</Text>
-        <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} />
-        <Text style={styles.label}>Příjmení</Text>
-        <TextInput style={styles.input} value={lastName} onChangeText={setLastName} />
-        <View style={styles.row}>
-          <Button title="Registrace" onPress={handleRegister} disabled={loading} />
-          <View style={{ width: 8 }} />
-          <Button title="Login" onPress={handleLogin} disabled={loading} />
-        </View>
-        <View style={{ height: 8 }} />
-        <Button title="Logout" onPress={handleLogout} />
-      </View>
-
-      <View style={styles.box}>
-        <Text style={styles.subtitle}>Kategorie (public)</Text>
-        {categories.map((c) => (
-          <Text key={c.id}>• {c.name}</Text>
-        ))}
-      </View>
-
-      <View style={styles.box}>
-        <Text style={styles.subtitle}>Poptávky (public)</Text>
-        {requests.map((r) => (
-          <Text key={r.id}>• {r.title} ({r.status})</Text>
-        ))}
-      </View>
-
-      <View style={styles.box}>
-        <Text style={styles.subtitle}>Akce s tokenem</Text>
-        <Button title="Vytvořit demo poptávku" onPress={handleCreateRequest} disabled={!token || loading} />
-        {!token && <Text style={styles.info}>Nejdřív se přihlas/registruj, uloží se token.</Text>}
-      </View>
-    </ScrollView>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarStyle: { backgroundColor: '#fff' },
+        tabBarIcon: ({ color, size }) => {
+          let icon = 'home';
+          if (route.name === 'Kalendář') icon = 'calendar';
+          if (route.name === 'Dostupnost') icon = 'time';
+          if (route.name === 'Portal') icon = 'grid';
+          if (route.name === 'Profil') icon = 'person';
+          return <Ionicons name={icon as any} size={size} color={color} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Domů" component={HomeScreen} />
+      <Tab.Screen name="Kalendář" component={CalendarScreen} />
+      <Tab.Screen name="Dostupnost" component={AvailabilityScreen} />
+      <Tab.Screen name="Portal" component={PortalScreen} />
+      <Tab.Screen name="Profil" component={ProfileScreen} />
+    </Tab.Navigator>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    paddingBottom: 40,
-    backgroundColor: '#f7f7fb',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  box: {
-    backgroundColor: '#fff',
-    padding: 12,
-    marginBottom: 12,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  label: {
-    marginTop: 6,
-    fontWeight: '500',
-  },
-  input: {
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 6,
-    padding: 8,
-    marginTop: 4,
-  },
-  row: {
-    flexDirection: 'row',
-    marginTop: 10,
-  },
-  info: {
-    marginTop: 6,
-    color: '#666',
-  },
-});
+export default function App() {
+  const [showOnboarding, setShowOnboarding] = useState(true);
+
+  return (
+    <NavigationContainer>
+      <StatusBar style="dark" />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {showOnboarding ? (
+          <Stack.Screen name="Onboarding">
+            {() => (
+              <OnboardingScreen
+                onGetStarted={() => setShowOnboarding(false)}
+                onLogin={() => setShowOnboarding(false)}
+              />
+            )}
+          </Stack.Screen>
+        ) : (
+          <>
+            <Stack.Screen name="Login" component={LoginScreenWrapper} />
+            <Stack.Screen name="Signup" component={SignupScreenWrapper} />
+            <Stack.Screen name="Main" component={MainTabs} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
+// jednoduché obalení pro navigaci mezi login/signup -> main
+const LoginScreenWrapper = ({ navigation }: any) => (
+  <LoginScreen
+    onLoginSuccess={() => navigation.replace('Main')}
+    onSwitchToSignup={() => navigation.navigate('Signup')}
+    onForgot={() => {}}
+  />
+);
+
+const SignupScreenWrapper = ({ navigation }: any) => (
+  <SignupScreen
+    onSignupSuccess={() => navigation.replace('Main')}
+    onSwitchToLogin={() => navigation.navigate('Login')}
+  />
+);

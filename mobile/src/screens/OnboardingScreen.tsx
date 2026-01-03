@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Image } from 'react-native';
 import { gradients, spacing, radius, colors } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GradientButton } from '../components/GradientButton';
@@ -14,31 +14,64 @@ type Props = {
 
 const slides = [
   {
-    title: 'Vítejte v aplikaci',
-    text: 'Rychlé domluvy mezi poptávajícími a poskytovateli.',
+    title: 'Rychlé domluvy',
+    text: 'Propojujeme poptávající a poskytovatele tak, aby se rychle dohodli.',
   },
   {
-    title: 'Najdi odborníka',
-    text: 'Filtrování podle kategorií a dostupnosti.',
+    title: 'Filtr a dostupnost',
+    text: 'Vyber si obor, lokality a časové možnosti, které ti vyhovují.',
   },
   {
-    title: 'Chatujte a dohodněte detaily',
-    text: 'Bezpečný chat a rychlé potvrzení nabídky.',
+    title: 'Chat a potvrzení',
+    text: 'Domluvte se v chatu a jedním klepnutím potvrďte nabídku.',
   },
 ];
 
 export const OnboardingScreen: React.FC<Props> = ({ onGetStarted, onLogin }) => {
+  const scrollRef = useRef<ScrollView>(null);
+  const [index, setIndex] = useState(0);
+
+  const onScroll = (e: any) => {
+    const x = e.nativeEvent.contentOffset.x;
+    setIndex(Math.round(x / width));
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.headerRow}>
+        <Image source={require('../../assets/LOGO_final-1.png')} style={styles.logo} resizeMode="contain" />
+      </View>
+      <View style={styles.container}>
         <Text style={styles.title}>Vítejte v aplikaci</Text>
         <Text style={styles.subtitle}>Rychlé domluvy mezi poptávajícími a poskytovateli.</Text>
-        <View style={styles.illustrationWrap}>
-          <LinearGradient colors={gradients.primary} style={styles.illustration} />
-        </View>
+        <ScrollView
+          horizontal
+          pagingEnabled
+          ref={scrollRef}
+          showsHorizontalScrollIndicator={false}
+          style={{ width }}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          contentContainerStyle={{ alignItems: 'center' }}
+        >
+          {slides.map((s, idx) => (
+            <View key={idx} style={[styles.slide, { width }]}>
+              <View style={styles.illustrationWrap}>
+                <LinearGradient
+                  colors={gradients.primary}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={styles.illustration}
+                />
+              </View>
+              <Text style={styles.slideTitle}>{s.title}</Text>
+              <Text style={styles.slideText}>{s.text}</Text>
+            </View>
+          ))}
+        </ScrollView>
         <View style={styles.dotsRow}>
-          {slides.map((_, idx) => (
-            <View key={idx} style={[styles.dot, idx === 0 && styles.dotActive]} />
+          {slides.map((_, i) => (
+            <View key={i} style={[styles.dot, i === index && styles.dotActive]} />
           ))}
         </View>
         <View style={styles.buttons}>
@@ -46,40 +79,62 @@ export const OnboardingScreen: React.FC<Props> = ({ onGetStarted, onLogin }) => 
           <View style={{ height: spacing.sm }} />
           <GradientButton title="Přihlásit se" onPress={onLogin} />
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },
+  headerRow: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
+  logo: { width: 180, height: 48 },
   container: {
-    padding: spacing.lg,
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
     alignItems: 'center',
     backgroundColor: '#fff',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
-    textAlign: 'center',
-    marginTop: spacing.lg,
+    fontSize: 30,
+    fontWeight: '900',
+    textAlign: 'left',
+    width: '100%',
+    marginTop: spacing.xl,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 17,
     color: colors.muted,
-    textAlign: 'center',
+    textAlign: 'left',
+    width: '100%',
     marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+  },
+  slide: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
   },
   illustrationWrap: {
-    marginTop: spacing.lg,
-    width: width * 0.8,
-    height: width * 0.6,
+    width: width * 0.82,
+    height: width * 0.62,
     borderRadius: radius.lg,
     overflow: 'hidden',
+    marginBottom: spacing.md,
   },
   illustration: {
     flex: 1,
-    opacity: 0.3,
+  },
+  slideTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  slideText: {
+    fontSize: 14,
+    color: colors.muted,
+    textAlign: 'center',
+    paddingHorizontal: spacing.lg,
   },
   dotsRow: {
     flexDirection: 'row',
@@ -91,10 +146,13 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: colors.border,
-    marginHorizontal: 4,
+    marginHorizontal: 5,
   },
   dotActive: {
     backgroundColor: colors.primary,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   buttons: {
     width: '100%',

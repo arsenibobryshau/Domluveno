@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { TextField } from '../components/TextField';
 import { GradientButton } from '../components/GradientButton';
 import { spacing, colors } from '../theme';
@@ -24,6 +24,7 @@ export const SignupScreen: React.FC<Props> = ({ onSignupSuccess, onSwitchToLogin
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <Image source={require('../../assets/LOGO_final-1.png')} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>Vytvoření nového účtu</Text>
         <Text style={styles.subtitle}>Vytvořte si účet a procházejte nabídky ostatních uživatelů.</Text>
         <View style={{ height: spacing.lg }} />
@@ -46,6 +47,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     backgroundColor: '#fff',
   },
+  logo: { width: 150, height: 40, marginBottom: spacing.lg },
   title: {
     fontSize: 28,
     fontWeight: '800',

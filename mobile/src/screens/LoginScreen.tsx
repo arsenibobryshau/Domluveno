@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Alert, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { TextField } from '../components/TextField';
 import { GradientButton } from '../components/GradientButton';
 import { spacing, colors } from '../theme';
@@ -14,6 +14,7 @@ type Props = {
 export const LoginScreen: React.FC<Props> = ({ onLoginSuccess, onSwitchToSignup, onForgot }) => {
   const [email, setEmail] = useState('test@example.com');
   const [password, setPassword] = useState('heslo123');
+  const [remember, setRemember] = useState(false);
 
   const handleLogin = async () => {
     // Dočasně přeskočíme backend, rovnou pokračujeme do aplikace
@@ -23,11 +24,16 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess, onSwitchToSignup,
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <Image source={require('../../assets/LOGO_final-1.png')} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>Vítejte zpět</Text>
         <Text style={styles.subtitle}>Jsme rádi, že jste zpět, prosíme přihlašte se.</Text>
         <View style={{ height: spacing.lg }} />
         <TextField label="E-mail" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
         <TextField label="Heslo" value={password} onChangeText={setPassword} secureTextEntry />
+        <TouchableOpacity style={styles.checkboxRow} onPress={() => setRemember(!remember)}>
+          <View style={[styles.checkbox, remember && styles.checkboxActive]} />
+          <Text style={styles.checkboxLabel}>Zapamatuj si mě</Text>
+        </TouchableOpacity>
         <View style={{ height: spacing.md }} />
         <GradientButton title="Přihlásit se" onPress={handleLogin} />
         <View style={{ height: spacing.sm }} />
@@ -45,6 +51,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     backgroundColor: '#fff',
   },
+  logo: { width: 150, height: 40, marginBottom: spacing.lg },
   title: {
     fontSize: 28,
     fontWeight: '800',
@@ -58,6 +65,27 @@ const styles = StyleSheet.create({
     color: '#6C4CF1',
     fontWeight: '600',
     marginTop: spacing.sm,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginRight: spacing.sm,
+  },
+  checkboxActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkboxLabel: {
+    color: colors.text,
+    fontWeight: '600',
   },
 });
 
